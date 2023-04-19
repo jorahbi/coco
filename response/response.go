@@ -6,6 +6,14 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
+//go:generate stringer -type State -linecomment
+const (
+	SUCCESS State = 0  //请求成功
+	FAIL    State = -1 //请求失败
+)
+
+type State int
+
 type Body struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
@@ -25,4 +33,8 @@ func Response(w http.ResponseWriter, resp interface{}, state StateInterface) {
 	}
 
 	httpx.OkJson(w, body)
+}
+
+func (e State) Code() int {
+	return int(e)
 }
