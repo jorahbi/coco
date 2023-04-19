@@ -1,6 +1,7 @@
 package response
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -22,17 +23,17 @@ type Body struct {
 
 type StateInterface interface {
 	Code() int
-	Msg() string
+	String() string
 }
 
-func Response(w http.ResponseWriter, resp interface{}, state StateInterface) {
+func Response(ctx context.Context, w http.ResponseWriter, resp interface{}, state StateInterface) {
 	body := Body{
 		Code: state.Code(),
-		Msg:  state.Msg(),
+		Msg:  state.String(),
 		Data: resp,
 	}
 
-	httpx.OkJson(w, body)
+	httpx.OkJsonCtx(ctx, w, body)
 }
 
 func (e State) Code() int {
