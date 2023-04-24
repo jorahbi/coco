@@ -33,13 +33,13 @@ type Options struct {
 	MaxLifetime int
 }
 
-type Single func() *engineGroup
+type Group func() *engineGroup
 type SqlArgs map[string]any
 
 var sf = &singleflight.Group{}
 var eg *engineGroup
 
-func Orm(o Options) Single {
+func Orm(o Options) Group {
 	if eg != nil {
 		return single
 	}
