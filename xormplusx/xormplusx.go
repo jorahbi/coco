@@ -3,6 +3,7 @@ package xormplusx
 import (
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xormplus/xorm"
@@ -16,8 +17,9 @@ const (
 	UPDATE    = "update"
 )
 
-type EngineGroup struct {
-	group *xorm.EngineGroup
+type engineGroup struct {
+	group   *xorm.EngineGroup
+	options Options
 }
 type Options struct {
 	Sources struct {
@@ -31,29 +33,39 @@ type Options struct {
 	MaxLifetime int
 }
 
+type Single func() *engineGroup
 type SqlArgs map[string]any
 
-var single = &singleflight.Group{}
+var sf = &singleflight.Group{}
+var eg *engineGroup
 
-func OrmGroup(o Options) *EngineGroup {
-	group, err, _ := single.Do("engine_group", func() (interface{}, error) {
+func Orm(o Options) Single {
+	if eg != nil {
+		return single
+	}
+	group, err, _ := sf.Do("engine_group", func() (interface{}, error) {
 		return newOrm(o)
 	})
 	if err != nil {
 		log.Panicln(err.Error())
 	}
+	eg = group.(*engineGroup)
 
-	return group.(*EngineGroup)
+	return single
 }
 
-func newOrm(o Options) (*EngineGroup, error) {
+func single() *engineGroup {
+	return eg
+}
+
+func newOrm(o Options) (*engineGroup, error) {
 	var (
 		slaves        []*xorm.Engine
 		master, slave *xorm.Engine
 		group         *xorm.EngineGroup
 		err           error
 	)
-	orm := &EngineGroup{}
+	orm := &engineGroup{options: o}
 	if master, err = xorm.NewEngine("mysql", o.Sources.Master); err != nil {
 		return orm, err
 	}
@@ -80,18 +92,18 @@ func newOrm(o Options) (*EngineGroup, error) {
 	group.ShowSQL(o.ShowSQL)
 
 	// 连接池中最大连接数
-	group.SetMaxOpenConns(100)
+	group.SetMaxOpenConns(o.MaxOpen)
 	// 连接池中最大空闲连接数
-	group.SetMaxIdleConns(10)
+	group.SetMaxIdleConns(o.MaxIdle)
 	// 单个连接最大存活时间(单位:秒)
-	group.SetConnMaxLifetime(10000)
+	group.SetConnMaxLifetime(time.Duration(o.MaxLifetime))
 	orm.group = group
 
 	return orm, nil
 
 }
 
-func (orm *EngineGroup) NewSqlArgs(queryId string) SqlArgs {
+func (orm *engineGroup) NewSqlArgs(queryId string) SqlArgs {
 	args := SqlArgs{}
 	args.Set("queryId", queryId)
 	args.Set("isDelete", UNDELETED)
@@ -111,10 +123,10 @@ func (args SqlArgs) String() string {
 	return fmt.Sprintln("sql args", map[string]any(args))
 }
 
-func (orm *EngineGroup) ReadConn() *xorm.Engine {
+func (orm *engineGroup) ReadConn() *xorm.Engine {
 	return orm.group.Main()
 }
 
-func (orm *EngineGroup) WriteConn() *xorm.Engine {
+func (orm *engineGroup) WriteConn() *xorm.Engine {
 	return orm.group.Subordinate()
 }
