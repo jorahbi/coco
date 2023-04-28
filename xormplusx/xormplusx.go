@@ -17,7 +17,7 @@ const (
 	UPDATE    = "update"
 )
 
-type engineGroup struct {
+type Group struct {
 	group   *xorm.EngineGroup
 	options Options
 }
@@ -33,39 +33,29 @@ type Options struct {
 	MaxLifetime int
 }
 
-type Group func() *engineGroup
 type SqlArgs map[string]any
 
 var sf = &singleflight.Group{}
-var eg *engineGroup
 
-func Orm(o Options) Group {
-	if eg != nil {
-		return single
-	}
-	group, err, _ := sf.Do("engine_group", func() (interface{}, error) {
+func Orm(o Options) *Group {
+	eg, err, _ := sf.Do("mysql", func() (interface{}, error) {
 		return newOrm(o)
 	})
 	if err != nil {
 		log.Panicln(err.Error())
 	}
-	eg = group.(*engineGroup)
+	return eg.(*Group)
 
-	return single
 }
 
-func single() *engineGroup {
-	return eg
-}
-
-func newOrm(o Options) (*engineGroup, error) {
+func newOrm(o Options) (*Group, error) {
 	var (
 		slaves        []*xorm.Engine
 		master, slave *xorm.Engine
 		group         *xorm.EngineGroup
 		err           error
 	)
-	orm := &engineGroup{options: o}
+	orm := &Group{options: o}
 	if master, err = xorm.NewEngine("mysql", o.Sources.Master); err != nil {
 		return orm, err
 	}
@@ -103,7 +93,7 @@ func newOrm(o Options) (*engineGroup, error) {
 
 }
 
-func (orm *engineGroup) NewSqlArgs(queryId string) SqlArgs {
+func (orm *Group) NewSqlArgs(queryId string) SqlArgs {
 	args := SqlArgs{}
 	args.Set("queryId", queryId)
 	args.Set("isDelete", UNDELETED)
@@ -123,10 +113,10 @@ func (args SqlArgs) String() string {
 	return fmt.Sprintln("sql args", map[string]any(args))
 }
 
-func (orm *engineGroup) ReadConn() *xorm.Engine {
+func (orm *Group) ReadConn() *xorm.Engine {
 	return orm.group.Main()
 }
 
-func (orm *engineGroup) WriteConn() *xorm.Engine {
+func (orm *Group) WriteConn() *xorm.Engine {
 	return orm.group.Subordinate()
 }
