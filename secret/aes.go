@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/base64"
 )
 
 // aes加密
-func AesEncrypt(plantText, key []byte) ([]byte, error) {
+func AesEncrypt(plantText, key []byte) (string, error) {
 	// 这个代码比较重要，是涉及到签名大小
 	if len(key) > 16 {
 		key = key[:16]
@@ -15,7 +16,7 @@ func AesEncrypt(plantText, key []byte) ([]byte, error) {
 	//NewCipher该函数限制了输入k的长度必须为16, 24或者32l
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	//补全码
 	plantText = pkcs7Padding(plantText, block.BlockSize())
@@ -25,7 +26,8 @@ func AesEncrypt(plantText, key []byte) ([]byte, error) {
 	ciphertext := make([]byte, len(plantText))
 	//加密
 	blockModel.CryptBlocks(ciphertext, plantText)
-	return ciphertext, nil
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
 func pkcs7Padding(ciphertext []byte, blockSize int) []byte {
@@ -35,7 +37,11 @@ func pkcs7Padding(ciphertext []byte, blockSize int) []byte {
 }
 
 // aes解密
-func AesDecrypt(ciphertext, key []byte) ([]byte, error) {
+func AesDecrypt(ciphertext string, key []byte) ([]byte, error) {
+	cipherbyte, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return nil, err
+	}
 	// 这个代码比较重要，是涉及到签名大小
 	if len(key) > 16 {
 		key = key[:16]
@@ -49,7 +55,7 @@ func AesDecrypt(ciphertext, key []byte) ([]byte, error) {
 	blockModel := cipher.NewCBCDecrypter(block, key[:block.BlockSize()])
 	plantText := make([]byte, len(ciphertext))
 	//解密
-	blockModel.CryptBlocks(plantText, ciphertext)
+	blockModel.CryptBlocks(plantText, cipherbyte)
 	//去补全码
 	plantText = pkcs7UnPadding(plantText, block.BlockSize())
 	return plantText, nil
