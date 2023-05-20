@@ -9,8 +9,8 @@ import (
 
 //go:generate stringer -type State -linecomment
 const (
-	SUCCESS State = 0  //请求成功
-	FAIL    State = -1 //请求失败
+	SUCCESS State = 200 //请求成功
+	FAIL    State = 500 //请求失败
 )
 
 type State int
