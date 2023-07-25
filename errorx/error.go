@@ -10,11 +10,6 @@ type CodeError struct {
 	Msg  string `json:"msg"`
 }
 
-type CodeErrorResponse struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-}
-
 type ErrInterface interface {
 	Code() int
 	String() string
@@ -26,11 +21,4 @@ func NewError(err ErrInterface, msg ...string) error {
 
 func (e *CodeError) Error() string {
 	return e.Msg
-}
-
-func (e *CodeError) Data() *CodeErrorResponse {
-	return &CodeErrorResponse{
-		Code: e.Code,
-		Msg:  e.Msg,
-	}
 }
