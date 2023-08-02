@@ -35,7 +35,6 @@ func GenQuery(dsn, path string) {
 				ColumnComment: value.ColumnComment, MultilineComment: value.MultilineComment,
 				Tag: value.Tag, GORMTag: value.GORMTag, CustomGenType: value.CustomGenType, Relation: value.Relation}
 			data.Fields = append(data.Fields, field)
-			fmt.Println(field.Type)
 		}
 		tpl := template.Must(template.New("query").Parse(`
 		package repo
