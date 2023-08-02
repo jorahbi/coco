@@ -37,119 +37,136 @@ func GenQuery(dsn, path string) {
 			data.Fields = append(data.Fields, field)
 		}
 		tpl := template.Must(template.New("query").Parse(`
+		// Code generated DO NOT EDIT.
+		// Code generated DO NOT EDIT.
+		// Code generated DO NOT EDIT.
 		package repo
-
-import (
-	"context"
-	"order/internal/data/model"
-	"order/internal/data/query"
-	"time"
-
-	"github.com/zeromicro/go-zero/core/stores/cache"
-	"gorm.io/gen"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-)
-
-type {{ .StructName }}Repo struct {
-	query *query.Query
-	cs    cache.Cache
-}
-
-type {{.StructName}}Time struct {
-    {{- range $index, $value := .Fields -}}
-    {{ if eq $value.Type "*time.Time" }}
-    Begin{{$.StructName}}{{$value.Name}} time.Time
-    End{{$.StructName}}{{$value.Name}} time.Time
-    {{ end }}
-    {{- end -}}
-}
-
-
-
-func New{{.StructName}}Repo(db *gorm.DB, cs cache.Cache) {{.StructName}}Repo {
-	return {{.StructName}}Repo{query: query.Use(db), cs: cs}
-}
-
-func (t {{.StructName}}Repo) FindList(ctx context.Context, m{{.StructName}} model.{{.StructName}}, page Page, times {{.StructName}}Time) ([]*model.{{.StructName}}, int64, error) {
-   return t.find(ctx, m{{.StructName}}, page, times)
-}
-
-func (t {{.StructName}}Repo) FindOne(ctx context.Context, m{{.StructName}} model.{{.StructName}}, times {{.StructName}}Time) (*model.{{.StructName}}, error) {
-   items, _, err := t.find(ctx, m{{.StructName}}, Page{}, times)
-   return items[0], err
-}
-
-func (t {{.StructName}}Repo) find(ctx context.Context, m{{.StructName}} model.{{.StructName}}, page Page, times {{.StructName}}Time) ([]*model.{{.StructName}}, int64, error) {
-    repo := t.query.{{.StructName}}
-    dbq := repo.WithContext(ctx)
-    {{- range $index, $value := .Fields -}}
-    {{ if eq $value.Type "*string" "string" }}
-    if m{{$.StructName}}.{{$value.Name}} != "" {
-        dbq.Where(repo.{{$value.Name}}.Eq(m{{$.StructName}}.{{$value.Name}}))
-    }
-    {{ else if eq $value.Type "*time.Time" }}
-    if !times.Begin{{$.StructName}}{{$value.Name}}.IsZero() {
-        dbq.Where(repo.{{$value.Name}}.Lte(times.Begin{{$.StructName}}{{$value.Name}}))
-    }
-    if !times.End{{$.StructName}}{{$value.Name}}.IsZero() {
-        dbq.Where(repo.{{$value.Name}}.Gte(times.End{{$.StructName}}{{$value.Name}}))
-    }
-    {{ else }}
-    if m{{$.StructName}}.{{$value.Name}} > 0 {
-        dbq.Where(repo.{{$value.Name}}.Eq(m{{$.StructName}}.{{$value.Name}}))
-    }
-    {{ end }}
-    {{- end -}}
-
-    if page.GetOffset() == 0 && page.GetLimit() == 0 {
-        m, err := dbq.Order(repo.ID.Desc()).First()
-        return []*model.{{.StructName}}{m}, 0, err
-    } else {
-        return dbq.Order(repo.ID.Desc()).FindByPage(page.GetOffset(), page.GetLimit())
-    }
-}
-
-func (t {{.StructName}}Repo) FindById(ctx context.Context, id int64) (*model.{{.StructName}}, error) {
-	repo := t.query.{{.StructName}}
-	return repo.WithContext(ctx).Where(repo.ID.Eq(id)).Take()
-}
-
-func (t {{.StructName}}Repo) Create(ctx context.Context, m ...*model.{{.StructName}}) error {
-	return t.query.{{.StructName}}.WithContext(ctx).Create(m...)
-}
-
-func (t {{.StructName}}Repo) Del(ctx context.Context, id int64) error {
-	repo := t.query.{{.StructName}}
-	_, err := repo.WithContext(ctx).Where(repo.ID.Eq(id)).Delete()
-	return err
-}
-
-func (t {{.StructName}}Repo) Update(ctx context.Context, m{{.StructName}} model.{{.StructName}}) (gen.ResultInfo, error) {
-	return t.query.{{.StructName}}.WithContext(ctx).Updates(m{{.StructName}})
-}
-
-func (t {{.StructName}}Repo) CreateOrUpdate(ctx context.Context, m{{.StructName}} model.{{.StructName}}) error {
-	datetime := time.Now()
-	m{{.StructName}}.CreateTime = datetime
-    m{{.StructName}}.UpdateTime = datetime
-	data := map[string]any{
-        {{- range $index, $value := .Fields -}}
-        "{{$value.ColumnName}}": m{{$.StructName}}.{{$value.Name}},
-        {{- end -}}
-	}
-    pk := clause.Column{Name: "id"}
-	return t.query.{{.StructName}}.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{pk},
-		DoUpdates: clause.Assignments(data), // 更新哪些字段
-	}).Create(&m{{.StructName}})
-}
+		
+		import (
+			"context"
+			"order/internal/data/model"
+			"order/internal/data/query"
+			"time"
+		
+			"github.com/zeromicro/go-zero/core/stores/cache"
+			"gorm.io/gen"
+			"gorm.io/gorm"
+			"gorm.io/gorm/clause"
+		)
+		
+		type {{ .StructName }}Repo struct {
+			query *query.Query
+			cs    cache.Cache
+			times {{.TableName}}Time
+		}
+		
+		type {{.TableName}}Time struct {
+			{{- range $index, $value := .Fields -}}
+			{{ if eq $value.Type "*time.Time" }}
+			begin{{$.StructName}}{{$value.Name}} time.Time
+			end{{$.StructName}}{{$value.Name}} time.Time
+			{{ end }}
+			{{- end }}
+		}
+		
+		
+		{{- range $index, $value := .Fields -}}
+		{{ if eq $value.Type "*time.Time" }}
+		func (t {{$.StructName}}Repo) With{{$value.Name}}(begin, end time.Time) {{ $.StructName }}Repo {
+			t.times.begin{{$.StructName}}{{$value.Name}} = begin
+			t.times.end{{$.StructName}}{{$value.Name}} = end
+		
+			return t
+		} 
+		
+		{{ end }}
+		{{- end -}}
+		
+		
+		func New{{.StructName}}Repo(db *gorm.DB, cs cache.Cache) {{.StructName}}Repo {
+			return {{.StructName}}Repo{query: query.Use(db), cs: cs}
+		}
+		
+		func (t {{.StructName}}Repo) FindList(ctx context.Context, m{{.StructName}} model.{{.StructName}}, offset, limit int) ([]*model.{{.StructName}}, int64, error) {
+		   return t.find(ctx, m{{.StructName}}, offset, limit)
+		}
+		
+		func (t {{.StructName}}Repo) FindOne(ctx context.Context, m{{.StructName}} model.{{.StructName}}) (*model.{{.StructName}}, error) {
+		   items, _, err := t.find(ctx, m{{.StructName}}, 0, 0)
+		   return items[0], err
+		}
+		
+		func (t {{.StructName}}Repo) find(ctx context.Context, m{{.StructName}} model.{{.StructName}}, offset, limit int) ([]*model.{{.StructName}}, int64, error) {
+			repo := t.query.{{.StructName}}
+			dbq := repo.WithContext(ctx)
+			{{- range $index, $value := .Fields -}}
+			{{ if eq $value.Type "*string" "string" }}
+			if m{{$.StructName}}.{{$value.Name}} != "" {
+				dbq.Where(repo.{{$value.Name}}.Eq(m{{$.StructName}}.{{$value.Name}}))
+			}
+			{{ else if eq $value.Type "*time.Time" }}
+			if !t.times.begin{{$.StructName}}{{$value.Name}}.IsZero() {
+				dbq.Where(repo.{{$value.Name}}.Lte(t.times.begin{{$.StructName}}{{$value.Name}}))
+			}
+			if !t.times.end{{$.StructName}}{{$value.Name}}.IsZero() {
+				dbq.Where(repo.{{$value.Name}}.Gte(t.times.end{{$.StructName}}{{$value.Name}}))
+			}
+			{{ else }}
+			if m{{$.StructName}}.{{$value.Name}} > 0 {
+				dbq.Where(repo.{{$value.Name}}.Eq(m{{$.StructName}}.{{$value.Name}}))
+			}
+			{{ end }}
+			{{- end -}}
+		
+			if offset == 0 && limit == 0 {
+				m, err := dbq.Order(repo.ID.Desc()).First()
+				return []*model.{{.StructName}}{m}, 0, err
+			} else {
+				return dbq.Order(repo.ID.Desc()).FindByPage(offset, limit)
+			}
+		}
+		
+		func (t {{.StructName}}Repo) FindById(ctx context.Context, id int64) (*model.{{.StructName}}, error) {
+			repo := t.query.{{.StructName}}
+			return repo.WithContext(ctx).Where(repo.ID.Eq(id)).Take()
+		}
+		
+		func (t {{.StructName}}Repo) Create(ctx context.Context, m ...*model.{{.StructName}}) error {
+			return t.query.{{.StructName}}.WithContext(ctx).Create(m...)
+		}
+		
+		func (t {{.StructName}}Repo) Del(ctx context.Context, id int64) error {
+			repo := t.query.{{.StructName}}
+			_, err := repo.WithContext(ctx).Where(repo.ID.Eq(id)).Delete()
+			return err
+		}
+		
+		func (t {{.StructName}}Repo) Update(ctx context.Context, m{{.StructName}} model.{{.StructName}}) (gen.ResultInfo, error) {
+			return t.query.{{.StructName}}.WithContext(ctx).Updates(m{{.StructName}})
+		}
+		
+		func (t {{.StructName}}Repo) CreateOrUpdate(ctx context.Context, m{{.StructName}} model.{{.StructName}}) error {
+			datetime := time.Now()
+			m{{.StructName}}.CreateTime = datetime
+			m{{.StructName}}.UpdateTime = datetime
+			data := map[string]any{
+				{{- range $index, $value := .Fields -}}
+				"{{$value.ColumnName}}": m{{$.StructName}}.{{$value.Name}},
+				{{- end -}}
+			}
+			pk := clause.Column{Name: "id"}
+			return t.query.{{.StructName}}.WithContext(ctx).Clauses(clause.OnConflict{
+				Columns:   []clause.Column{pk},
+				DoUpdates: clause.Assignments(data), // 更新哪些字段
+			}).Create(&m{{.StructName}})
+		}
+		
 
 		`))
 		if err != nil {
 			panic(err)
 		}
-		filePath := fmt.Sprintf("%s/%s.go", path, mate.TableName)
+		filePath := fmt.Sprintf("%s/%s.gen.go", path, mate.TableName)
 		file, err := os.OpenFile(filePath, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			fmt.Println("文件打开失败", err)
