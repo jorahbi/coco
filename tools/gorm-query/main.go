@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	query "tools/gorm-query/gen"
+
+	query "github.com/jorahbi/coco/tools/gorm-query/gen"
 )
 
 var dsn = flag.String("dsn", "", "the mysql dsn")
