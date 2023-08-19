@@ -23,4 +23,4 @@ echo "开始创建库：$dbname 的表：$2"
 gentool -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -tables="${tables}"
 #gentool -dsn 'root:toor@tcp(localhost)/main?charset=utf8mb4&parseTime=true&loc=Local' -table="${tables}"  -dir="${modeldir}"
 
-go run gorm-query/main.go -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -path ./dao/query -pname test -tables "${tables}"
+gorm-query -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -path ./dao/query -pname test -tables "${tables}"
