@@ -16,11 +16,11 @@ host=127.0.0.1
 port=3306
 dbname=$1
 username=root
-passwd=''
+passwd='0}{;Pp1W"@HRMxTOSNvhl$Yw'
 
 echo "开始创建库：$dbname 的表：$2"
 #goctl model mysql datasource -url="${username}:${passwd}@tcp(${host}:${port})/${dbname}" -table="${tables}"  -dir="${modeldir}" -cache=false --style=goZero
 gentool -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -tables="${tables}"
 #gentool -dsn 'root:toor@tcp(localhost)/main?charset=utf8mb4&parseTime=true&loc=Local' -table="${tables}"  -dir="${modeldir}"
 
-go run gorm-query/main.go -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -path=./dao/query
+go run gorm-query/main.go -dsn "${username}:${passwd}@tcp(${host}:${port})/${dbname}?charset=utf8mb4&parseTime=true&loc=Local" -path ./dao/query -pname test -tables "${tables}"

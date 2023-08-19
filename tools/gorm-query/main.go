@@ -10,6 +10,7 @@ import (
 var dsn = flag.String("dsn", "", "the mysql dsn")
 var genPath = flag.String("path", "", "the gen path")
 var tables = flag.String("tables", "", "the tables ")
+var pName = flag.String("pname", "tools/", "the pkg name ")
 
 type Config struct {
 	Db struct {
@@ -23,7 +24,7 @@ func main() {
 		fmt.Println("miss params")
 		return
 	}
-	query.GenQuery(*dsn, *genPath, *tables)
+	query.GenQuery(*dsn, *genPath, *tables, *pName)
 }
 
 // func build(dsn string) {

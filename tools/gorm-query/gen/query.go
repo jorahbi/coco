@@ -6,13 +6,14 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/samber/lo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gen"
 	"gorm.io/gen/field"
 	"gorm.io/gorm"
 )
 
-func GenQuery(dsn, path, table string) {
+func GenQuery(dsn, path, table, pname string) {
 	g := gen.NewGenerator(gen.Config{
 		OutPath:           "",
 		FieldWithIndexTag: true,
@@ -27,13 +28,16 @@ func GenQuery(dsn, path, table string) {
 	if err != nil {
 		panic(fmt.Errorf("get all tables fail: %w", err))
 	}
-
+	tables := strings.Split(table, ",")
+	tabMap := lo.Associate(tables, func(f string) (string, struct{}) {
+		return f, struct{}{}
+	})
 	for _, tableName := range tableList {
-		// if tableName != "address" {
-		// 	continue
-		// }
+		if _, isok := tabMap[tableName]; !isok {
+			continue
+		}
 		mate := g.GenerateModel(tableName)
-		data := Query{StructName: mate.ModelStructName, TableName: mate.TableName}
+		data := Query{StructName: mate.ModelStructName, TableName: mate.TableName, PName: pname}
 		for _, value := range mate.Fields {
 			if value.Type == "*time.Time" || value.Type == "time.Time" {
 				data.WithTime = true
@@ -87,7 +91,7 @@ func tpl() string {
 		{{ if .WithTime}}
 		"time"
 		{{ end }}
-		"tools/dao/model"
+		"{{.PName}}/dao/model"
 	
 		"gorm.io/gen"
 		"gorm.io/gorm/clause"
@@ -180,6 +184,7 @@ type Query struct {
 	IsCreateTime bool
 	IsUpdateTime bool
 	WithTime     bool
+	PName        string
 }
 
 type Field struct {
