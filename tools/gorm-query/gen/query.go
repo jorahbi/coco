@@ -47,6 +47,7 @@ func GenQuery(dsn, path, table, pname string) {
 					data.IsUpdateTime = true
 				}
 			}
+			// "int" "int8" "int16" "int32" "int64" "float32" "float64"
 			field := Field{Name: value.Name, Type: value.Type, ColumnName: value.ColumnName,
 				ColumnComment: value.ColumnComment, MultilineComment: value.MultilineComment,
 				Tag: value.Tag, GORMTag: value.GORMTag, CustomGenType: value.CustomGenType, Relation: value.Relation}
@@ -59,8 +60,7 @@ func GenQuery(dsn, path, table, pname string) {
 			"trim": func(s, cutset string) string {
 				return strings.Trim(s, cutset)
 			},
-		}).
-			Parse(tpl()))
+		}).Parse(tpl()))
 		if err != nil {
 			panic(err)
 		}
@@ -103,13 +103,16 @@ func tpl() string {
 	{{ if eq $value.Type "*string" "string" }}
 	func (m *{{tolow $.StructName}}) With{{$value.Name}}(cond {{trim $value.Type "*"}}) {{$.StructName}}Option {
 		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
-			return t.Where(m.{{$value.Name}}.Eq(cond))
+			if cond != "" {
+				return t.Where(m.{{$value.Name}}.Eq(cond))
+			}
+			return t
 		}
 	}
 	{{else if eq $value.Name "ID" "Id"}}
 	func (m *{{tolow $.StructName}}) WithIds(ids []{{trim $value.Type "*"}}) {{$.StructName}}Option {
 		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
-			if len(ids) != 0 {
+			if len(ids) > 0 {
 				return t.Where(m.ID.In(ids...))
 			}
 			return t
@@ -118,10 +121,11 @@ func tpl() string {
 	{{ else if eq $value.Type "*time.Time" "time.Time" }}
 	func (m *{{tolow $.StructName}}) With{{$value.Name}}(times ...{{trim $value.Type "*"}}) {{$.StructName}}Option {
 		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
-			if len(times) > 0 {
+			
+			if len(times) > 0 && !times[0].Local().IsZero(){
 				t.Where(m.{{$value.Name}}.Lte(times[0]))
 			}
-			if len(times) > 1 {
+			if len(times) > 1  && !times[1].Local().IsZero(){
 				t.Where(m.{{$value.Name}}.Lte(times[1]))
 			}
 			return t
@@ -132,6 +136,15 @@ func tpl() string {
 	func (m *{{tolow $.StructName}}) With{{$value.Name}}(cond {{trim $value.Type "*"}}) {{$.StructName}}Option {
 		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
 			return t.Where(m.{{$value.Name}}.Is(cond))
+		}
+	}
+	{{ else if eq $value.Type  "int" "int8" "int16" "int32" "int64" "float32" "float64" "*int" "*int8" "*int16" "*int32" "*int64" "*float32" "*float64" }}
+	func (m *{{tolow $.StructName}}) With{{$value.Name}}(cond {{trim $value.Type "*"}}) {{$.StructName}}Option {
+		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
+			if cond != 0 {
+				return t.Where(m.{{$value.Name}}.Eq(cond))
+			}
+			return t
 		}
 	}
 	{{ end }}

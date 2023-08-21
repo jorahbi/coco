@@ -19,6 +19,10 @@ type Config struct {
 }
 
 func main() {
+	// t := struct {
+	// 	t time.Time
+	// }{}
+	// fmt.Print(t.t.Local().IsZero())
 	flag.Parse()
 	if *dsn == "" || *genPath == "" {
 		fmt.Println("miss params")
