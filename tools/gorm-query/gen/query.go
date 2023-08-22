@@ -118,6 +118,15 @@ func tpl() string {
 			return t
 		}
 	}
+
+	func (m *{{tolow $.StructName}}) WithId(id {{trim $value.Type "*"}}) {{$.StructName}}Option {
+		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
+			if id > 0 {
+				return t.Where(m.ID.Eq(id))
+			}
+			return t
+		}
+	}
 	{{ else if eq $value.Type "*time.Time" "time.Time" }}
 	func (m *{{tolow $.StructName}}) With{{$value.Name}}(times ...{{trim $value.Type "*"}}) {{$.StructName}}Option {
 		return func(t *{{tolow $.StructName}}Do) *{{tolow $.StructName}}Do {
@@ -179,11 +188,11 @@ func tpl() string {
 		}).Create(&m{{.StructName}})
 	}
 	
-	func (d *{{tolow $.StructName}}Do) WithOptions(m *{{tolow $.StructName}}Do, options ...{{.StructName}}Option) *{{tolow $.StructName}}Do {
+	func (d *{{tolow $.StructName}}Do) WithOptions(options ...{{.StructName}}Option) *{{tolow $.StructName}}Do {
 		// Access the underlying *gorm.DB from gen.DO
 		for _, opt := range options {
 			if opt != nil {
-				d = opt(m)
+				d = opt(d)
 			}
 		}
 		return d
