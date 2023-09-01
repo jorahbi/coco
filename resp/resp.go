@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-type Resp struct {
+type response struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
 	Data any    `json:"data,omitempty"`
@@ -12,12 +12,30 @@ type Resp struct {
 
 var respPool = sync.Pool{
 	New: func() any {
-		return &Resp{}
+		return &response{}
 	},
 }
 
-func Response(code int, msg string, data any) Resp {
-	resp := respPool.Get().(*Resp)
+func Fail(code int, msg string) response {
+	resp := respPool.Get().(*response)
+	defer resp.put()
+	resp.Code = code
+	resp.Msg = msg
+
+	return *resp
+}
+
+func Ok(code int, msg string) response {
+	resp := respPool.Get().(*response)
+	defer resp.put()
+	resp.Code = code
+	resp.Msg = msg
+
+	return *resp
+}
+
+func OkWithData(code int, msg string, data any) response {
+	resp := respPool.Get().(*response)
 	defer resp.put()
 	resp.Code = code
 	resp.Msg = msg
@@ -26,7 +44,7 @@ func Response(code int, msg string, data any) Resp {
 	return *resp
 }
 
-func (resp Resp) put() {
+func (resp response) put() {
 	resp.Code = 0
 	resp.Msg = ""
 	resp.Data = nil
