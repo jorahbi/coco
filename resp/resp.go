@@ -19,34 +19,12 @@ var respPool = sync.Pool{
 	},
 }
 
-func Fail(code int, msg string) response {
-	resp := respPool.Get().(*response)
-	defer resp.put()
-	resp.Code = code
-	resp.Msg = msg
-
-	return *resp
-}
-
 func Resp(err error) response {
-	resp := respPool.Get().(*response)
-	defer resp.put()
-	errno := unpack(err)
-	resp.Code = int(errno.Code())
-	resp.Msg = errno.Message()
-
-	return *resp
+	return pack(nil, err)
 }
 
 func RespWithData(data any, err error) response {
-	resp := respPool.Get().(*response)
-	defer resp.put()
-	errno := unpack(err)
-	resp.Code = int(errno.Code())
-	resp.Msg = errno.Message()
-	resp.Data = data
-
-	return *resp
+	return pack(data, err)
 }
 
 func RespWithCode(code int, msg string, data any) response {
@@ -59,30 +37,24 @@ func RespWithCode(code int, msg string, data any) response {
 	return *resp
 }
 
-func unpack(err error) *status.Status {
-	if err != nil {
-		return status.New(http.StatusOK, "ok")
+func pack(data any, err error) response {
+	resp := respPool.Get().(*response)
+	defer resp.put()
+	resp.Code = http.StatusOK
+	resp.Msg = "ok"
+	if err == nil {
+		resp.Data = data
+		return *resp
 	}
 	if st, ok := status.FromError(err); ok {
-		return st
+		resp.Code = int(st.Code())
+		resp.Msg = st.Message()
+		return *resp
 	}
-
-	return status.New(http.StatusInternalServerError, "Internal Server Error")
+	resp.Code = http.StatusInternalServerError
+	resp.Msg = err.Error()
+	return *resp
 }
-
-// func Resp(data any, err error) response {
-// 	if err == nil {
-// 		// httpx.OkJsonCtx(r.Context(), w, resp.OkWithData(http.StatusOK, "ok", response))
-// 		return Ok()
-// 	}
-
-// 	code := int(http.StatusInternalServerError)
-// 	msg := err.Error()
-// 	if st, ok := status.FromError(err); ok {
-// 		code = int(st.Code())
-// 		msg = st.Message()
-// 	}
-// }
 
 func (resp response) put() {
 	resp.Code = 0
