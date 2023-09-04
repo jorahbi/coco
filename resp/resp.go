@@ -19,7 +19,7 @@ var respPool = sync.Pool{
 	},
 }
 
-func Resp(err error) response {
+func RespNotData(err error) response {
 	return pack(nil, err)
 }
 
