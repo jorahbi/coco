@@ -87,7 +87,6 @@ func tpl() string {
 package query
 
 import (
-	"context"
 	{{ if .WithTime}}
 	"time"
 	{{ end }}
@@ -129,7 +128,7 @@ func (m *{{tolow $.StructName}}) WithFilter(m{{.StructName}} model.{{.StructName
 	return conds
 }
 
-func (t *{{tolow $.StructName}}Do) CreateOrUpdate(ctx context.Context, m{{.StructName}} model.{{.StructName}}) error {
+func (t *{{tolow $.StructName}}Do) CreateOrUpdate(m *{{tolow $.StructName}}, m{{.StructName}} model.{{.StructName}}, cols ...string) error {
 	{{- if or .IsUpdateTime  .IsCreateTime}}
 	datetime := time.Now()
 	{{ if .IsUpdateTime -}}
@@ -138,17 +137,19 @@ func (t *{{tolow $.StructName}}Do) CreateOrUpdate(ctx context.Context, m{{.Struc
 	{{- if .IsCreateTime -}}
 	m{{.StructName}}.CreateTime = datetime
 	{{end -}}
-	{{ end -}}
-	
-	data := map[string]any{
-		{{- range $index, $value := .Fields -}}
-		"{{$value.ColumnName}}": m{{$.StructName}}.{{$value.Name}},
-		{{- end -}}
+	{{ end }}
+	if len(cols) == 0 {
+		cols = []string{
+			{{- range $index, $value := .Fields -}}
+			m.{{$value.Name}}.ColumnName().String(),
+			{{ end }}
+		}
 	}
-	pk := clause.Column{Name: "id"}
+
+	pk := clause.Column{Name: m.ID.ColumnName().String()}
 	return t.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{pk},
-		DoUpdates: clause.Assignments(data), // 更新哪些字段
+		DoUpdates: clause.AssignmentColumns(cols), // 更新哪些字段
 	}).Create(&m{{.StructName}})
 }`
 }
