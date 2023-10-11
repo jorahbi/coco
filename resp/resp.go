@@ -19,15 +19,19 @@ var respPool = sync.Pool{
 	},
 }
 
-func RespNoData(err error) *response {
-	return pack(err)
-
+func NewResp() *response {
+	return respPool.Get().(*response)
 }
 
-func RespWithData(data any, err error) *response {
-	rsp := pack(err)
-	rsp.Data = data
-	return rsp
+func (r *response) RespNoData(err error) *response {
+	r.pack(err)
+	return r
+}
+
+func (r *response) RespWithData(data any, err error) *response {
+	r.pack(err)
+	r.Data = data
+	return r
 }
 
 func RespWithCode(code int, msg string, data any) *response {
@@ -39,21 +43,19 @@ func RespWithCode(code int, msg string, data any) *response {
 	return resp
 }
 
-func pack(err error) *response {
-	resp := respPool.Get().(*response)
-	resp.Code = http.StatusOK
-	resp.Msg = "ok"
+func (r *response) pack(err error) {
+	r.Code = http.StatusOK
+	r.Msg = "ok"
 	if err == nil {
-		return resp
+		return
 	}
 	if st, ok := status.FromError(err); ok {
-		resp.Code = int(st.Code())
-		resp.Msg = st.Message()
-		return resp
+		r.Code = int(st.Code())
+		r.Msg = st.Message()
+		return
 	}
-	resp.Code = http.StatusInternalServerError
-	resp.Msg = err.Error()
-	return resp
+	r.Code = http.StatusInternalServerError
+	r.Msg = err.Error()
 }
 
 func (resp *response) Put() {
