@@ -58,7 +58,7 @@ func (r *response) pack(err error) {
 	r.Msg = err.Error()
 }
 
-func (resp *response) Put() {
+func (resp *response) Release() {
 	resp.Code = 0
 	resp.Msg = ""
 	resp.Data = nil
