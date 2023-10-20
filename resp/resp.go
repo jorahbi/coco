@@ -34,7 +34,7 @@ func (r *response) RespWithData(data any, err error) *response {
 	return r
 }
 
-func RespWithCode(code int, msg string, data any) *response {
+func (r *response) RespWithCode(code int, msg string, data any) *response {
 	resp := respPool.Get().(*response)
 	resp.Code = code
 	resp.Msg = msg
