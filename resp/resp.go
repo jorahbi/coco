@@ -2,48 +2,40 @@ package resp
 
 import (
 	"net/http"
-	"sync"
 
 	"google.golang.org/grpc/status"
 )
 
-type response struct {
+type response[T any] struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
-	Data any    `json:"data,omitempty"`
+	Data T      `json:"data,omitempty"`
 }
 
-var respPool = sync.Pool{
-	New: func() any {
-		return &response{}
-	},
+func NewResp[T any]() *response[T] {
+	return &response[T]{}
 }
 
-func NewResp() *response {
-	return respPool.Get().(*response)
-}
-
-func (r *response) RespNoData(err error) *response {
+func (r *response[T]) RespNoData(err error) *response[T] {
 	r.pack(err)
 	return r
 }
 
-func (r *response) RespWithData(data any, err error) *response {
+func (r *response[T]) RespWithData(data T, err error) *response[T] {
 	r.pack(err)
 	r.Data = data
 	return r
 }
 
-func (r *response) RespWithCode(code int, msg string, data any) *response {
-	resp := respPool.Get().(*response)
-	resp.Code = code
-	resp.Msg = msg
-	resp.Data = data
+func (r *response[T]) RespWithCode(code int, msg string, data T) *response[T] {
+	r.Code = code
+	r.Msg = msg
+	r.Data = data
 
-	return resp
+	return r
 }
 
-func (r *response) pack(err error) {
+func (r *response[T]) pack(err error) {
 	r.Code = http.StatusOK
 	r.Msg = "ok"
 	if err == nil {
@@ -56,11 +48,4 @@ func (r *response) pack(err error) {
 	}
 	r.Code = http.StatusInternalServerError
 	r.Msg = err.Error()
-}
-
-func (resp *response) Release() {
-	resp.Code = 0
-	resp.Msg = ""
-	resp.Data = nil
-	respPool.Put(resp)
 }

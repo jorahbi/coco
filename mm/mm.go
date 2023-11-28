@@ -16,27 +16,21 @@ func init() {
 	}
 }
 
-type Object[T any] struct {
-	p    unsafe.Pointer
-	data *T
-}
-
-func MustObject[T any]() Object[T] {
+func MustAlloc[T any]() *T {
 	size := unsafe.Sizeof(new(T))
 	p, err := menory.Alloc(size)
 	if err != nil {
-		return Object[T]{data: new(T), p: nil}
+		return new(T)
 	}
-	return Object[T]{data: (*T)(p), p: p}
+	return (*T)(p)
 }
 
-func (o Object[T]) Get() *T {
-	return o.data
-}
-
-func (o Object[T]) Free() {
-	if o.p == nil {
+func Free(obj ...any) {
+	if len(obj) == 0 {
 		return
 	}
-	menory.Free(uintptr(o.p))
+	for _, o := range obj {
+		menory.Free(uintptr(unsafe.Pointer(&o)))
+	}
+
 }
