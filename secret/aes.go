@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 )
 
 func pKCS5Padding(ciphertext []byte, blockSize int) []byte {
@@ -52,4 +54,11 @@ func AesDecrypt(pass64 string, key []byte) ([]byte, error) {
 	blockMode.CryptBlocks(origData, crypted)
 	origData = pKCS5UnPadding(origData)
 	return origData, nil
+}
+
+func Md5(data []byte) string {
+	md5Ctx := md5.New()
+	md5Ctx.Write(data)
+	cipherStr := md5Ctx.Sum(nil)
+	return hex.EncodeToString(cipherStr)
 }
