@@ -6,10 +6,10 @@ type ObjectItemInterface interface {
 	Reset()
 }
 
-func NewPool(o ObjectItemInterface) *sync.Pool {
+func NewPool(fn func() ObjectItemInterface) *sync.Pool {
 	return &sync.Pool{
 		New: func() any {
-			return o
+			return fn()
 		},
 	}
 }
