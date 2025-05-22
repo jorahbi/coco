@@ -223,3 +223,26 @@ func MapToStructNested(data map[string]interface{}, target interface{}) {
 		}
 	}
 }
+
+// columns, _ := rows.Columns()
+// values := make([]interface{}, len(columns))
+// result := make([]map[string]interface{}, 0)
+
+// for rows.Next() {
+//     ptrs := make([]interface{}, len(columns))
+//     for i := range values {
+//         ptrs[i] = &values[i]
+//     }
+
+//     if err := rows.Scan(ptrs...); err != nil {
+//         return err
+//     }
+
+//     row := make(map[string]interface{})
+//     for i, col := range columns {
+//         row[col] = values[i]
+//     }
+//     result = append(result, row)
+// }
+
+// jsonBytes, err := json.Marshal(result)
